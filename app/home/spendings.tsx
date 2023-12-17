@@ -1,4 +1,14 @@
-import React, { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { FIREBASE_DB } from '../../firebaseConfig'
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore'
 import {
   StyleSheet,
   Text,
@@ -11,66 +21,105 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker'
 import { Picker } from '@react-native-picker/picker'
+import { TouchableWithoutFeedback, Keyboard } from 'react-native'
+
+interface Spending {
+  id: string
+  expenseType: string
+  description: string
+  amount: number
+  date: Date
+  month: number
+}
 
 const Spendings = () => {
   const [expenseType, setExpenseType] = useState<string>('grocery')
   const [description, setDescription] = useState<string>('')
   const [amount, setAmount] = useState<string>('')
   const [date, setDate] = useState<Date>(new Date())
+  const [month, setMonth] = useState<number>(new Date().getMonth() + 1)
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false)
+
+  console.log('date', date)
+  console.log('showDatePicker', showDatePicker)
+  console.log('expenseType', expenseType)
+  console.log('description', description)
+  console.log('amount', amount)
+  console.log('month', month)
 
   const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || date
     setShowDatePicker(Platform.OS === 'ios')
     setDate(currentDate)
+    setMonth(currentDate.getMonth() + 1)
+  }
+
+  const addSpending = async () => {
+    console.log('addSpending clicked')
+    if (amount) {
+      try {
+        const docRef = await addDoc(collection(FIREBASE_DB, 'spendings'), {
+          expenseType,
+          description,
+          amount,
+          date,
+          month,
+        })
+        console.log('Document written with ID: ', docRef.id)
+      } catch (e) {
+        console.error('Error adding document: ', e)
+      }
+    }
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Add Spending</Text>
-
-      <Text>Expense Type:</Text>
-      <Picker
-        selectedValue={expenseType}
-        onValueChange={(itemValue, itemIndex) => setExpenseType(itemValue)}
-      >
-        <Picker.Item label='Grocery' value='grocery' />
-        <Picker.Item label='Car' value='car' />
-        <Picker.Item label='Beauty' value='beauty' />
-        <Picker.Item label='Food & Drink' value='food&drink' />
-        <Picker.Item label='Bills' value='bills' />
-        <Picker.Item label='Rent' value='rent' />
-        <Picker.Item label='Travel' value='travel' />
-        <Picker.Item label='Gas' value='gas' />
-        <Picker.Item label='Other' value='other' />
-      </Picker>
-
-      <Text>Description:</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={setDescription}
-        value={description}
-      />
-
-      <Text>Amount:</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={setAmount}
-        value={amount}
-        keyboardType='numeric'
-      />
-
-      <Text>Date:</Text>
-      <Button title='Select Date' onPress={() => setShowDatePicker(true)} />
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode='date'
-          display='default'
-          onChange={onChangeDate}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <View style={styles.headerRow}>
+          <Button title='Add Spending' onPress={addSpending} />
+        </View>
+        <Text>Description:</Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={setDescription}
+          value={description}
+          placeholder='Enter description'
         />
-      )}
-    </View>
+
+        <Text>Amount:</Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={setAmount}
+          value={amount}
+          keyboardType='numeric'
+          placeholder='Enter amount'
+        />
+        <Picker
+          selectedValue={expenseType}
+          onValueChange={(itemValue, itemIndex) => setExpenseType(itemValue)}
+        >
+          <Picker.Item label='Grocery' value='grocery' />
+          <Picker.Item label='Gas' value='gas' />
+          <Picker.Item label='Bills' value='bills' />
+          <Picker.Item label='Food & Drink' value='food&drink' />
+          <Picker.Item label='Travel' value='travel' />
+          <Picker.Item label='Beauty' value='beauty' />
+          <Picker.Item label='Car' value='car' />
+          <Picker.Item label='Rent' value='rent' />
+          <Picker.Item label='Other' value='other' />
+        </Picker>
+
+        <Button title='Select Date' onPress={() => setShowDatePicker(true)} />
+        {showDatePicker && (
+          <DateTimePicker
+            value={date}
+            mode='date'
+            display='default'
+            onChange={onChangeDate}
+          />
+        )}
+      </View>
+    </TouchableWithoutFeedback>
   )
 }
 
@@ -78,7 +127,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 10,
   },
   title: {
     fontSize: 22,
@@ -91,6 +140,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 10,
     padding: 10,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
 })
 

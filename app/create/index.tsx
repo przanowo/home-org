@@ -1,6 +1,7 @@
 import { Button, StyleSheet, Text, TextInput } from 'react-native'
 import { View } from '../../components/Themed'
 import { useState } from 'react'
+import { TouchableWithoutFeedback, Keyboard } from 'react-native'
 
 const CreateHome = () => {
   const [homeName, setHomeName] = useState('')
@@ -13,36 +14,38 @@ const CreateHome = () => {
     console.log('Create home')
   }
   return (
-    <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        onChangeText={setHomeName}
-        value={homeName}
-        placeholder='Home Name'
-      />
-      <TextInput
-        style={styles.input}
-        onChangeText={setOwnerEmail}
-        value={ownerEmail}
-        placeholder='Owner Email'
-        keyboardType='email-address'
-      />
-      <TextInput
-        style={styles.input}
-        onChangeText={setPassword}
-        value={password}
-        placeholder='Password'
-        secureTextEntry
-      />
-      <TextInput
-        style={styles.input}
-        onChangeText={setConfirmPassword}
-        value={confirmPassword}
-        placeholder='Confirm Password'
-        secureTextEntry
-      />
-      <Button title='Create Home' onPress={handleCreateHome} />
-    </View>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <TextInput
+          style={styles.input}
+          onChangeText={setHomeName}
+          value={homeName}
+          placeholder='Home Name'
+        />
+        <TextInput
+          style={styles.input}
+          onChangeText={setOwnerEmail}
+          value={ownerEmail}
+          placeholder='Owner Email'
+          keyboardType='email-address'
+        />
+        <TextInput
+          style={styles.input}
+          onChangeText={setPassword}
+          value={password}
+          placeholder='Password'
+          secureTextEntry
+        />
+        <TextInput
+          style={styles.input}
+          onChangeText={setConfirmPassword}
+          value={confirmPassword}
+          placeholder='Confirm Password'
+          secureTextEntry
+        />
+        <Button title='Create Home' onPress={handleCreateHome} />
+      </View>
+    </TouchableWithoutFeedback>
   )
 }
 

@@ -7,41 +7,119 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
-import { shoppingItems } from '../../data/shopping'
+// import { shoppingItems } from '../../data/shopping'
+import { useEffect, useState } from 'react'
+import { FIREBASE_DB } from '../../firebaseConfig'
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore'
+import { TouchableWithoutFeedback, Keyboard } from 'react-native'
+
+interface ShoppingItem {
+  id: string
+  name: string
+  bought: boolean
+}
 
 const Shopping = () => {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Shopping List</Text>
+  const [shoppingItem, setShoppingItem] = useState<string>('')
+  const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]) // Use dummy data
+  // console.log('shoppingItem1', shoppingItem)
+  console.log('shoppingItems2', shoppingItems)
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder='Add new item'
-          // onChangeText={...} // To be implemented
-        />
-        <Button
-          title='Add'
-          onPress={() => {}} // To be implemented
+  useEffect(() => {
+    const getShoppingItems = async () => {
+      const q = query(collection(FIREBASE_DB, 'shoppingItems'))
+      const querySnapshot = await getDocs(q)
+      const items: ShoppingItem[] = []
+      querySnapshot.forEach((doc) => {
+        items.push({
+          id: doc.id,
+          name: doc.data().name as string,
+          bought: doc.data().bought as boolean,
+        })
+      })
+      setShoppingItems(items)
+    }
+    getShoppingItems()
+  }, [])
+
+  const addShoppingItem = async () => {
+    if (shoppingItem) {
+      console.log('shoppingItem in firebase function', shoppingItem)
+      try {
+        const docRef = await addDoc(collection(FIREBASE_DB, 'shoppingItems'), {
+          name: shoppingItem,
+          bought: false,
+        })
+        console.log('Document written with ID: ', docRef.id)
+
+        // Fetch the newly added item and update the state
+        const newItem = {
+          id: docRef.id,
+          name: shoppingItem,
+          bought: false,
+        }
+
+        setShoppingItems((prevItems) => [...prevItems, newItem])
+        setShoppingItem('')
+      } catch (e) {
+        console.error('Error adding document: ', e)
+      }
+    }
+  }
+  const deleteShoppingItem = async (id: string) => {
+    console.log('deleteShoppingItem', id)
+    if (id) {
+      try {
+        await deleteDoc(doc(FIREBASE_DB, 'shoppingItems', id))
+        console.log('Document deleted with ID: ')
+        const newItems = shoppingItems.filter((item) => item.id !== id)
+        setShoppingItems(newItems)
+      } catch (e) {
+        console.error('Error deleting document: ', e)
+      }
+    }
+  }
+
+  return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={styles.container}>
+        <Text style={styles.title}>Shopping List</Text>
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder='Add new item'
+            value={shoppingItem}
+            onChangeText={setShoppingItem} // To be implemented
+          />
+          <Button title='Add' onPress={addShoppingItem} />
+        </View>
+
+        <FlatList
+          data={shoppingItems}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <View style={styles.listItem}>
+              <Text style={styles.itemText}>{item.name}</Text>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => deleteShoppingItem(item.id)}
+              >
+                <Text style={styles.deleteButtonText}>Bought</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         />
       </View>
-
-      <FlatList
-        data={shoppingItems}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.listItem}>
-            <Text style={styles.itemText}>{item.name}</Text>
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={() => {}} // To be implemented
-            >
-              <Text style={styles.deleteButtonText}>Bought</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      />
-    </View>
+    </TouchableWithoutFeedback>
   )
 }
 

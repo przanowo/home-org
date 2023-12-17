@@ -10,7 +10,7 @@ const HomePage = () => {
       <Link style={styles.input} href='/login/'>
         Login
       </Link>
-      <Pressable
+      {/* <Pressable
         onPress={() =>
           router.push({
             pathname: '/users/[id]',
@@ -19,7 +19,7 @@ const HomePage = () => {
         }
       >
         <Text>Go to user 2</Text>
-      </Pressable>
+      </Pressable> */}
     </View>
   )
 }

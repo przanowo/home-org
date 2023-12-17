@@ -1,14 +1,24 @@
-import React, { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { FIREBASE_DB } from '../../firebaseConfig'
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  where,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore'
 import { StyleSheet, Text, View } from 'react-native'
 import { PieChart } from 'react-native-chart-kit'
-import { spendings } from '../../data/spendings' // Update the path as necessary
 import { Picker } from '@react-native-picker/picker'
 
 interface SpendingItem {
-  id: number
+  id: string
   description: string
-  category: string
-  date: string
+  expenseType: string
+  date: Date
+  month: number
   amount: number
 }
 
@@ -26,41 +36,52 @@ const Home = () => {
   )
   const [filteredSpendings, setFilteredSpendings] = useState<SpendingItem[]>([])
 
+  console.log('selectedMonth', selectedMonth)
+  console.log('filteredSpendings', filteredSpendings)
+
   useEffect(() => {
-    filterSpendingsByMonth()
+    const getSpendingItemsPerMonth = async () => {
+      // Assuming selectedMonth is 1-based (January is 1, February is 2, etc.)
+      const q = query(
+        collection(FIREBASE_DB, 'spendings'),
+        where('month', '==', selectedMonth)
+      )
+      const querySnapshot = await getDocs(q)
+      const items = querySnapshot.docs.map((doc) => ({
+        id: doc.id as string,
+        description: doc.data().description as string,
+        expenseType: doc.data().expenseType as string,
+        date: doc.data().date.toDate() as Date, // Convert Firestore Timestamp to JavaScript Date
+        amount: doc.data().amount as number,
+        month: doc.data().month as number,
+      }))
+
+      setFilteredSpendings(items)
+    }
+    getSpendingItemsPerMonth()
   }, [selectedMonth])
-
-  const filterSpendingsByMonth = (): void => {
-    const filtered: SpendingItem[] = spendings.filter((spending) => {
-      const month = new Date(spending.date).getMonth() + 1
-      return month === selectedMonth
-    })
-    setFilteredSpendings(filtered)
-  }
-
-  // const spendingData = () => {
-  //   // Aggregate spending data by category for the selected month
-  //   // Example implementation, you may need to adjust it as per your requirements
-  //   // Return data in a format suitable for PieChart
-  // }
 
   const spendingData = (): PieChartData[] => {
     const sumsByCategory: { [key: string]: number } = {}
 
     filteredSpendings.forEach((spending) => {
-      const category = spending.category
-      const amount = spending.amount
+      const expenseType = spending.expenseType
+      const amount = Number(spending.amount)
 
-      if (!sumsByCategory[category]) {
-        sumsByCategory[category] = 0
+      console.log('category', expenseType)
+      console.log('amount', amount)
+      console.log('sumsByCategory', sumsByCategory)
+
+      if (!sumsByCategory[expenseType]) {
+        sumsByCategory[expenseType] = 0
       }
 
-      sumsByCategory[category] += amount
+      sumsByCategory[expenseType] += amount
     })
 
-    return Object.keys(sumsByCategory).map((category) => ({
-      name: category,
-      amount: sumsByCategory[category],
+    return Object.keys(sumsByCategory).map((expenseType) => ({
+      name: expenseType,
+      amount: sumsByCategory[expenseType],
       color: getRandomColor(),
       legendFontColor: '#7F7F7F',
       legendFontSize: 15,
@@ -75,10 +96,38 @@ const Home = () => {
     }
     return color
   }
-
+  const getMonthName = (selectedMonth: number) => {
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ]
+    // Adjust for zero-based index (if necessary)
+    const index = selectedMonth - 1 // Remove this line if selectedMonth is already zero-based
+    if (index >= 0 && index < 12) {
+      return monthNames[index]
+    } else {
+      return 'Error'
+    }
+  }
+  const selectedMonthName = getMonthName(selectedMonth)
+  const TotalPerMount = filteredSpendings.reduce(
+    (total, spending) => total + Number(spending.amount),
+    0
+  )
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Home</Text>
+      <Text style={styles.title}>{selectedMonthName}</Text>
+      <Text>{TotalPerMount}</Text>
 
       <PieChart
         data={spendingData()}
@@ -112,8 +161,6 @@ const Home = () => {
 
         {/* Add other months */}
       </Picker>
-
-      {/* Additional UI elements to display spending details */}
     </View>
   )
 }
