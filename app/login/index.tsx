@@ -1,8 +1,12 @@
-import { Button, StyleSheet, Text, TextInput } from 'react-native'
+import { Button, StyleSheet, Text, TextInput, Alert } from 'react-native'
 import { View } from '../../components/Themed'
 import { useState } from 'react'
-import { router, useNavigation } from 'expo-router'
+import { useNavigation } from 'expo-router'
 import { TouchableWithoutFeedback, Keyboard } from 'react-native'
+import { FIREBASE_AUTH } from '../../firebaseConfig'
+import { FIREBASE_DB } from '../../firebaseConfig'
+import { collection, getDocs, query, where } from 'firebase/firestore'
+import { signInWithEmailAndPassword } from 'firebase/auth'
 
 const LoginPage = () => {
   const [homeName, setHomeName] = useState('')
@@ -10,10 +14,28 @@ const LoginPage = () => {
 
   const navigation: any = useNavigation()
 
-  const handleLogin = () => {
-    navigation.navigate('home')
-    console.log('Login')
-    // router.push('/home/')
+  const handleLogin = async () => {
+    const homesRef = collection(FIREBASE_DB, 'homes')
+
+    try {
+      const q = query(homesRef, where('homeName', '==', homeName))
+      const querySnapshot = await getDocs(q)
+
+      if (querySnapshot.empty) {
+        Alert.alert('Home Not Found', 'This home does not exist.')
+        return
+      }
+
+      const userData = querySnapshot.docs[0].data()
+      const userEmail = userData.ownerEmail
+
+      await signInWithEmailAndPassword(FIREBASE_AUTH, userEmail, password)
+      navigation.navigate('home')
+      // router.push('/home/')
+      Alert.alert('Success', 'Logged in successfully.')
+    } catch (e) {
+      Alert.alert('Error', 'Error logging in.')
+    }
   }
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

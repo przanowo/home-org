@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react'
 import { FIREBASE_DB } from '../../firebaseConfig'
-import {
-  addDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  doc,
-} from 'firebase/firestore'
+import { collection, getDocs, query, where } from 'firebase/firestore'
 import { StyleSheet, Text, View } from 'react-native'
 import { PieChart } from 'react-native-chart-kit'
 import { Picker } from '@react-native-picker/picker'

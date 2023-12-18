@@ -1,14 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { FIREBASE_DB } from '../../firebaseConfig'
-import {
-  addDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  doc,
-} from 'firebase/firestore'
+import { addDoc, collection } from 'firebase/firestore'
 import {
   StyleSheet,
   Text,
@@ -16,6 +8,7 @@ import {
   TextInput,
   Button,
   Platform,
+  Alert,
 } from 'react-native'
 import DateTimePicker, {
   DateTimePickerEvent,
@@ -40,13 +33,6 @@ const Spendings = () => {
   const [month, setMonth] = useState<number>(new Date().getMonth() + 1)
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false)
 
-  console.log('date', date)
-  console.log('showDatePicker', showDatePicker)
-  console.log('expenseType', expenseType)
-  console.log('description', description)
-  console.log('amount', amount)
-  console.log('month', month)
-
   const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
     const currentDate = selectedDate || date
     setShowDatePicker(Platform.OS === 'ios')
@@ -55,7 +41,6 @@ const Spendings = () => {
   }
 
   const addSpending = async () => {
-    console.log('addSpending clicked')
     if (amount) {
       try {
         const docRef = await addDoc(collection(FIREBASE_DB, 'spendings'), {
@@ -65,9 +50,9 @@ const Spendings = () => {
           date,
           month,
         })
-        console.log('Document written with ID: ', docRef.id)
+        Alert.alert('Success', 'Spending added successfully.')
       } catch (e) {
-        console.error('Error adding document: ', e)
+        Alert.alert('Error', 'Error adding spending.')
       }
     }
   }

@@ -6,13 +6,13 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from 'react-native'
 import {
   addDoc,
   collection,
   getDocs,
   query,
-  where,
   deleteDoc,
   doc,
   arrayUnion,
@@ -64,13 +64,11 @@ const Todo = () => {
 
   const handleAddList = async () => {
     if (newListTitle) {
-      console.log('newListTitle', newListTitle)
       try {
         const docRef = await addDoc(collection(FIREBASE_DB, 'todoLists'), {
           listTitle: newListTitle,
           items: [],
         })
-        console.log('Document written with ID: ', docRef.id)
         // Fetch new list of todo lists
         const newList = {
           listId: docRef.id,
@@ -81,16 +79,14 @@ const Todo = () => {
 
         setNewListTitle('')
       } catch (e) {
-        console.error('Error adding document: ', e)
+        Alert.alert('Error', 'Error creating list.')
       }
     }
   }
 
   const handleAddItem = async (listId: string) => {
-    console.log('Add new item' + listId)
     const itemText = newItemTexts[listId]
     if (itemText) {
-      console.log('itemText', itemText)
       try {
         const listRef = doc(FIREBASE_DB, 'todoLists', listId)
         const newItem = {
@@ -112,7 +108,7 @@ const Todo = () => {
 
         setNewItemTexts((prev) => ({ ...prev, [listId]: '' }))
       } catch (e) {
-        console.error('Error adding item: ', e)
+        Alert.alert('Error', 'Error adding item.')
       }
     }
   }
@@ -120,25 +116,22 @@ const Todo = () => {
     setNewItemTexts((prev) => ({ ...prev, [listId]: text }))
   }
 
-  const handleCheckItem = (listId: string, taskId: string) => {
-    console.log('Check item', listId, taskId)
-  }
+  // const handleCheckItem = (listId: string, taskId: string) => {
+  //   console.log('Check item', listId, taskId)
+  // }
 
   const handleRemoveList = async (listId: string) => {
-    console.log('Remove item', listId)
     if (listId) {
       try {
         await deleteDoc(doc(FIREBASE_DB, 'todoLists', listId))
-        console.log('Document deleted with ID: ')
         const newLists = lists.filter((list) => list.listId !== listId)
         setLists(newLists)
       } catch (e) {
-        console.error('Error deleting document: ', e)
+        Alert.alert('Error', 'Error deleting list.')
       }
     }
   }
   const handleRemoveListItem = async (listId: string, taskId: string) => {
-    console.log('Remove item', listId, taskId)
     if (listId && taskId) {
       try {
         const listRef = doc(FIREBASE_DB, 'todoLists', listId)
@@ -165,7 +158,7 @@ const Todo = () => {
           setLists(newLists)
         }
       } catch (e) {
-        console.error('Error deleting document: ', e)
+        Alert.alert('Error', 'Error deleting item.')
       }
     }
   }

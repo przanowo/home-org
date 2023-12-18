@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   FlatList,
   StyleSheet,
@@ -7,7 +8,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
-// import { shoppingItems } from '../../data/shopping'
 import { useEffect, useState } from 'react'
 import { FIREBASE_DB } from '../../firebaseConfig'
 import {
@@ -15,7 +15,6 @@ import {
   collection,
   getDocs,
   query,
-  where,
   deleteDoc,
   doc,
 } from 'firebase/firestore'
@@ -52,14 +51,11 @@ const Shopping = () => {
 
   const addShoppingItem = async () => {
     if (shoppingItem) {
-      console.log('shoppingItem in firebase function', shoppingItem)
       try {
         const docRef = await addDoc(collection(FIREBASE_DB, 'shoppingItems'), {
           name: shoppingItem,
           bought: false,
         })
-        console.log('Document written with ID: ', docRef.id)
-
         // Fetch the newly added item and update the state
         const newItem = {
           id: docRef.id,
@@ -70,7 +66,7 @@ const Shopping = () => {
         setShoppingItems((prevItems) => [...prevItems, newItem])
         setShoppingItem('')
       } catch (e) {
-        console.error('Error adding document: ', e)
+        Alert.alert('Error', 'Error adding shopping item.')
       }
     }
   }
@@ -79,11 +75,10 @@ const Shopping = () => {
     if (id) {
       try {
         await deleteDoc(doc(FIREBASE_DB, 'shoppingItems', id))
-        console.log('Document deleted with ID: ')
         const newItems = shoppingItems.filter((item) => item.id !== id)
         setShoppingItems(newItems)
       } catch (e) {
-        console.error('Error deleting document: ', e)
+        Alert.alert('Error', 'Error deleting shopping item.')
       }
     }
   }
