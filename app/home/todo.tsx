@@ -22,6 +22,7 @@ import {
 import { useEffect, useState } from 'react'
 import { FIREBASE_DB } from '../../firebaseConfig'
 import { TouchableWithoutFeedback, Keyboard } from 'react-native'
+import useFetchHomeId from '../hooks/home'
 
 interface TodoItem {
   taskId: string
@@ -36,18 +37,20 @@ interface TodoList {
 }
 
 const Todo = () => {
+  const homeId = useFetchHomeId()
   const [newListTitle, setNewListTitle] = useState<string>('')
   const [newItemTexts, setNewItemTexts] = useState<{ [key: string]: string }>(
     {}
   )
-
   const [lists, setLists] = useState<TodoList[]>([])
-  console.log('lists', lists)
 
   useEffect(() => {
+    if (!homeId) {
+      return
+    }
     const getTodoLists = async () => {
-      const q = query(collection(FIREBASE_DB, 'todoLists'))
-      const querySnapshot = await getDocs(q)
+      const todoListsRef = collection(FIREBASE_DB, 'homes', homeId, 'todoLists')
+      const querySnapshot = await getDocs(todoListsRef)
       const lists: TodoList[] = []
       querySnapshot.forEach((doc) => {
         const data = doc.data()
@@ -60,12 +63,18 @@ const Todo = () => {
       setLists(lists)
     }
     getTodoLists()
-  }, [])
+  }, [homeId])
 
   const handleAddList = async () => {
     if (newListTitle) {
       try {
-        const docRef = await addDoc(collection(FIREBASE_DB, 'todoLists'), {
+        const todoListsRef = collection(
+          FIREBASE_DB,
+          'homes',
+          homeId,
+          'todoLists'
+        )
+        const docRef = await addDoc(todoListsRef, {
           listTitle: newListTitle,
           items: [],
         })
@@ -88,7 +97,7 @@ const Todo = () => {
     const itemText = newItemTexts[listId]
     if (itemText) {
       try {
-        const listRef = doc(FIREBASE_DB, 'todoLists', listId)
+        const listRef = doc(FIREBASE_DB, 'homes', homeId, 'todoLists', listId)
         const newItem = {
           taskId: new Date().getTime().toString(), // Generate a unique ID
           taskName: itemText,
@@ -123,18 +132,18 @@ const Todo = () => {
   const handleRemoveList = async (listId: string) => {
     if (listId) {
       try {
-        await deleteDoc(doc(FIREBASE_DB, 'todoLists', listId))
+        await deleteDoc(doc(FIREBASE_DB, 'homes', homeId, 'todoLists', listId))
         const newLists = lists.filter((list) => list.listId !== listId)
         setLists(newLists)
-      } catch (e) {
-        Alert.alert('Error', 'Error deleting list.')
+      } catch (e: any) {
+        Alert.alert(e, 'Error deleting list.')
       }
     }
   }
   const handleRemoveListItem = async (listId: string, taskId: string) => {
     if (listId && taskId) {
       try {
-        const listRef = doc(FIREBASE_DB, 'todoLists', listId)
+        const listRef = doc(FIREBASE_DB, 'homes', homeId, 'todoLists', listId)
 
         // Find the item to remove
         const list = lists.find((list) => list.listId === listId)

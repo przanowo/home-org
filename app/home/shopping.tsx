@@ -19,6 +19,7 @@ import {
   doc,
 } from 'firebase/firestore'
 import { TouchableWithoutFeedback, Keyboard } from 'react-native'
+import useFetchHomeId from '../hooks/home'
 
 interface ShoppingItem {
   id: string
@@ -27,14 +28,16 @@ interface ShoppingItem {
 }
 
 const Shopping = () => {
+  const homeId = useFetchHomeId()
   const [shoppingItem, setShoppingItem] = useState<string>('')
   const [shoppingItems, setShoppingItems] = useState<ShoppingItem[]>([]) // Use dummy data
-  // console.log('shoppingItem1', shoppingItem)
-  console.log('shoppingItems2', shoppingItems)
 
   useEffect(() => {
+    if (!homeId) {
+      return
+    }
     const getShoppingItems = async () => {
-      const q = query(collection(FIREBASE_DB, 'shoppingItems'))
+      const q = query(collection(FIREBASE_DB, 'homes', homeId, 'shoppingItems'))
       const querySnapshot = await getDocs(q)
       const items: ShoppingItem[] = []
       querySnapshot.forEach((doc) => {
@@ -47,15 +50,18 @@ const Shopping = () => {
       setShoppingItems(items)
     }
     getShoppingItems()
-  }, [])
+  }, [homeId])
 
   const addShoppingItem = async () => {
     if (shoppingItem) {
       try {
-        const docRef = await addDoc(collection(FIREBASE_DB, 'shoppingItems'), {
-          name: shoppingItem,
-          bought: false,
-        })
+        const docRef = await addDoc(
+          collection(FIREBASE_DB, 'homes', homeId, 'shoppingItems'),
+          {
+            name: shoppingItem,
+            bought: false,
+          }
+        )
         // Fetch the newly added item and update the state
         const newItem = {
           id: docRef.id,
@@ -71,10 +77,9 @@ const Shopping = () => {
     }
   }
   const deleteShoppingItem = async (id: string) => {
-    console.log('deleteShoppingItem', id)
     if (id) {
       try {
-        await deleteDoc(doc(FIREBASE_DB, 'shoppingItems', id))
+        await deleteDoc(doc(FIREBASE_DB, 'homes', homeId, 'shoppingItems', id))
         const newItems = shoppingItems.filter((item) => item.id !== id)
         setShoppingItems(newItems)
       } catch (e) {

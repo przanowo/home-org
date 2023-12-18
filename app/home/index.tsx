@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore'
 import { StyleSheet, Text, View } from 'react-native'
 import { PieChart } from 'react-native-chart-kit'
 import { Picker } from '@react-native-picker/picker'
+import useFetchHomeId from '../hooks/home'
 
 interface SpendingItem {
   id: string
@@ -23,19 +24,20 @@ interface PieChartData {
 }
 
 const Home = () => {
+  const homeId = useFetchHomeId()
   const [selectedMonth, setSelectedMonth] = useState<number>(
     new Date().getMonth() + 1
   )
   const [filteredSpendings, setFilteredSpendings] = useState<SpendingItem[]>([])
 
-  console.log('selectedMonth', selectedMonth)
-  console.log('filteredSpendings', filteredSpendings)
-
   useEffect(() => {
+    if (!homeId) {
+      return
+    }
     const getSpendingItemsPerMonth = async () => {
       // Assuming selectedMonth is 1-based (January is 1, February is 2, etc.)
       const q = query(
-        collection(FIREBASE_DB, 'spendings'),
+        collection(FIREBASE_DB, 'homes', homeId, 'spendings'),
         where('month', '==', selectedMonth)
       )
       const querySnapshot = await getDocs(q)
@@ -51,7 +53,7 @@ const Home = () => {
       setFilteredSpendings(items)
     }
     getSpendingItemsPerMonth()
-  }, [selectedMonth])
+  }, [selectedMonth, homeId])
 
   const spendingData = (): PieChartData[] => {
     const sumsByCategory: { [key: string]: number } = {}
@@ -59,10 +61,6 @@ const Home = () => {
     filteredSpendings.forEach((spending) => {
       const expenseType = spending.expenseType
       const amount = Number(spending.amount)
-
-      console.log('category', expenseType)
-      console.log('amount', amount)
-      console.log('sumsByCategory', sumsByCategory)
 
       if (!sumsByCategory[expenseType]) {
         sumsByCategory[expenseType] = 0

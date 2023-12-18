@@ -15,6 +15,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker'
 import { Picker } from '@react-native-picker/picker'
 import { TouchableWithoutFeedback, Keyboard } from 'react-native'
+import useFetchHomeId from '../hooks/home'
 
 interface Spending {
   id: string
@@ -26,6 +27,7 @@ interface Spending {
 }
 
 const Spendings = () => {
+  const homeId = useFetchHomeId()
   const [expenseType, setExpenseType] = useState<string>('grocery')
   const [description, setDescription] = useState<string>('')
   const [amount, setAmount] = useState<string>('')
@@ -41,9 +43,12 @@ const Spendings = () => {
   }
 
   const addSpending = async () => {
+    if (!homeId) {
+      return
+    }
     if (amount) {
       try {
-        const docRef = await addDoc(collection(FIREBASE_DB, 'spendings'), {
+        await addDoc(collection(FIREBASE_DB, 'homes', homeId, 'spendings'), {
           expenseType,
           description,
           amount,
